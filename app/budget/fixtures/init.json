@@ -1,0 +1,352 @@
+[
+	{
+		"model": "budget.budget",
+		"pk": 1,
+		"fields": {
+			"nom": "Alimentation",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 2,
+		"fields": {
+			"nom": "Animaux",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 3,
+		"fields": {
+			"nom": "Assurances",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 4,
+		"fields": {
+			"nom": "Bricolage",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 5,
+		"fields": {
+			"nom": "Charges",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 6,
+		"fields": {
+			"nom": "Cigarettes",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 7,
+		"fields": {
+			"nom": "Coiffure",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 8,
+		"fields": {
+			"nom": "Câble",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 9,
+		"fields": {
+			"nom": "Cadeaux",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 10,
+		"fields": {
+			"nom": "Cantine",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 11,
+		"fields": {
+			"nom": "Dons",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 12,
+		"fields": {
+			"nom": "Eau",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 13,
+		"fields": {
+			"nom": "Electricité",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 14,
+		"fields": {
+			"nom": "Epargne",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 15,
+		"fields": {
+			"nom": "Essence",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 16,
+		"fields": {
+			"nom": "Frais banque",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 17,
+		"fields": {
+			"nom": "Frais pro",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 18,
+		"fields": {
+			"nom": "Garde",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 19,
+		"fields": {
+			"nom": "Gaz",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 20,
+		"fields": {
+			"nom": "Impôts",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 21,
+		"fields": {
+			"nom": "Internet",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 22,
+		"fields": {
+			"nom": "Loisirs",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 23,
+		"fields": {
+			"nom": "Loyers",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 24,
+		"fields": {
+			"nom": "Maison",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 25,
+		"fields": {
+			"nom": "Mutuelles",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 26,
+		"fields": {
+			"nom": "Ordinateurs",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 27,
+		"fields": {
+			"nom": "Parfumerie",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 28,
+		"fields": {
+			"nom": "Parking",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 29,
+		"fields": {
+			"nom": "Pharmacie",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 30,
+		"fields": {
+			"nom": "Péages",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 31,
+		"fields": {
+			"nom": "Restaurants",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 32,
+		"fields": {
+			"nom": "Salaires",
+			"crediteur": true
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 33,
+		"fields": {
+			"nom": "Santé",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 34,
+		"fields": {
+			"nom": "Sécu",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 35,
+		"fields": {
+			"nom": "Sports",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 36,
+		"fields": {
+			"nom": "Télévision",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 37,
+		"fields": {
+			"nom": "Téléphone",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 38,
+		"fields": {
+			"nom": "Vacances",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 39,
+		"fields": {
+			"nom": "Voiture",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 40,
+		"fields": {
+			"nom": "Véterinaire",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.budget",
+		"pk": 41,
+		"fields": {
+			"nom": "Vêtements",
+			"crediteur": false
+		}
+	},
+	{
+		"model": "budget.compte",
+		"pk": 1,
+		"fields": {
+			"nom": "Compte principal",
+			"report": "0.00",
+			"parent": null,
+			"externe": false,
+			"actif": true
+		}
+	},
+	{
+		"model": "budget.compte",
+		"pk": 2,
+		"fields": {
+			"nom": "Carte de crédit",
+			"report": "0.00",
+			"parent": 1,
+			"externe": false,
+			"actif": true
+		}
+	}
+]

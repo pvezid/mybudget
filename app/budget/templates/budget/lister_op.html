@@ -1,0 +1,349 @@
+{% extends "budget/base.html" %}
+{% load static %}
+{% load myfilters %}
+
+{% block title %}Opérations{% endblock %}
+
+{% block script %}
+<script>
+	const budgetsDict = {
+		{% for bdg in budgets %}"{{ bdg.id }}": "{{ bdg.nom }}",{% endfor %}
+	};
+	const commit = function() {
+		$('#transaction-dialog').dialog('close');
+		const expDate = new Date(Date.now()+(45*60000));
+		CookieUtil.set('opdate', JSON.stringify($('#id_date').val()), expDate, '/', null, null);
+		if ($('#id_bis').is(":checked")) {
+			preferences.montantTR = parseFloat($('#id_montantbis').val());
+			preferences.compteTR = $('#id_srcbis').val();
+			saveData(PreferenceStorageKey, preferences);
+		}
+		return $.ajax({
+			type: 'POST',
+			url: $('#transaction-form').attr('action'),
+			data: $('#transaction-form').serialize(),
+			success: function() {
+				$("*").css("cursor", "wait");
+				window.location.reload();
+			},
+			error: function(xhr) {
+				$("*").css("cursor", "wait");
+				window.location.reload();
+			},
+		});
+	};
+	const doSave = function() {
+		if ($('#id_montant').val().trim().length == 0) {
+			$('#transaction-dialog .errMsg').html('Il manque le montant');
+			return;
+		} else {
+			montant = parseFloat($('#id_montant').val());
+			if (montant < 0.0) {
+				$('#transaction-dialog .errMsg').html('Le montant doit être supérieur ou égal à 0');
+				return;
+			}
+		}
+		if ($('#id_date').val().trim().length == 0) {
+			$('#transaction-dialog .errMsg').html('Il manque la date');
+			return;
+		}
+		if ($('#id_src').val().trim().length == 0 && $('#id_dst').val().trim().length == 0) {
+			$('#transaction-dialog .errMsg').html('Il faut un compte source ou destination');
+			return;
+		}
+		if ($('#id_src').val().trim().length == $('#id_dst').val().trim().length) {
+			$('#transaction-dialog .errMsg').html('Les comptes source et destination doivent être différents');
+			return;
+		}
+		if ($('#id_bis').is(":checked")) {
+			if ($('#id_montantbis').val().trim().length == 0) {
+				$('#transaction-dialog .errMsg').html('Il manque la limite');
+				return;
+			} else {
+				montant = parseFloat($('#id_montantbis').val());
+				if (montant < 0.01) {
+					$('#transaction-dialog .errMsg').html('La limite doit être supérieur ou égal à 0,01');
+					return;
+				}
+			}
+			if ($('#id_srcbis').val() == $('#id_src').val()) {
+				$('#transaction-dialog .errMsg').html('Le compte source et le compte TR doivent être différents');
+				return;
+			}
+			if ($('#id_srcbis').val().trim().length == 0) {
+				$('#transaction-dialog .errMsg').html('Il manque le compte TR');
+				return;
+			}
+		}
+		commit();
+	};
+	{% if compte_ctx %}
+	const ajoutTransactionDialog = function(link) {
+		event.preventDefault();
+		$('#transaction-form').attr('action', link);
+		$('#id_montant').val('');
+		$('#id_montantbis').val(preferences.montantTR);
+		let cdate = null;
+		const cval = CookieUtil.get('opdate');
+		if (cval != null) {
+			try { cdate = JSON.parse(cval); }
+			catch (e) { /* ignored */ }
+		}
+		const ndate = (preferences.newDate == 1 && cdate != null)?cdate:new Date()
+		$("#id_date").datepicker("setDate", ndate);
+		$('#id_src').val('{{ compte_ctx.id }}');
+		$('#id_srcbis').val(preferences.compteTR);
+		$('#id_dst').val('');
+		$('#id_budget').val('');
+		$('#id_note').val('');
+		$('#transaction-dialog').dialog('open');
+	};
+	{% endif %}
+	const modifTransactionDialog = function(link, id, reconcilie) {
+		event.preventDefault();
+		$('#transaction-form').attr('action', link);
+		montant = parseFloat($('#montant'+id).text().replace(',','.'));
+		$('#id_montant').val(montant).prop('disabled',reconcilie);
+		$('#id_date').val($('#date'+id).text()).prop('disabled',reconcilie);
+		$('#id_src').val($('#src'+id).text()).prop('disabled',reconcilie);
+		$('#id_dst').val($('#dst'+id).text()).prop('disabled',reconcilie);
+		$('#id_budget').val($('#budget'+id).text())
+		$('#id_note').val($('#note'+id).text());
+		$('#id_bis').prop('disabled',reconcilie);
+		$('#transaction-dialog').dialog('open');
+	};
+	const updatePeriod = function() {
+		event.preventDefault();
+		let period = $('#period_sel option:selected').val();
+		$("*").css("cursor", "wait");
+		{% if compte_ctx %}window.location.replace("{% url 'budget:lister_op' compte_ctx.id %}/" + period){% endif %}
+		{% if budget_ctx %}window.location.replace("{% url 'budget:lister_op_budget' budget_ctx.id %}/" + period){% endif %}
+	};
+	const filtrerOperations = function (str) {
+		//split the current value of searchInput
+		var data = str.toUpperCase().split(" ");
+		//create a jquery object of the rows
+		var jo = $("#detailRows").find("tr");
+		if (str == "") {
+			jo.show();
+			return;
+		}
+		//hide all the rows
+		jo.hide();
+		//Recusively filter the jquery object to get results.
+		jo.filter(function (i, v) {
+			var $t = $(this);
+			for (var d = 0; d < data.length; ++d) {
+				if ($t.text().toUpperCase().indexOf(data[d]) > -1) {
+					return true;
+				}
+			}
+			return false;
+		}).show();
+	}
+	$( function() {
+		$('#period_sel').selectmenu({ change: updatePeriod, width: 300 });
+		{% if compte_ctx %}
+		$("#menubar").append('<li><a href="{% url 'budget:mensuel_op' compte_ctx.id %}">Intégrer les Op. Mensuelles</a></li>');
+		{% if compte_ctx.has_parent and compte_ctx.parent != compte_ctx %}$("#menubar").append('<li><a href="{% url 'budget:transfert_op' compte_ctx.id %}">Transférer vers le compte parent</a></li>');{% endif %}
+		{% endif %}
+		$('.sbdg').each(function () {
+			const blid = $(this).attr("id");
+			const regles = blid.replace("trid","budget");
+			const blist = $('#'+regles).text().split(';');
+			bset = new Set();
+			blist.forEach(function (nom) {
+				tnom = nom.trim();
+				if (tnom) {
+					m = tnom.match(/^[^:*]+/)
+					if (m) { tnom = m[0] }
+					bset.add(tnom)
+				}
+			});
+			htmlstr = '';
+			bset.forEach(function (nom) {
+				htmlstr += '<span class="tag">'+nom+'</span>&nbsp;';
+			});
+			$('#'+blid).html(htmlstr);
+		});
+		$('#transaction-dialog').dialog({
+			autoOpen: false,
+			width: 520,
+			modal: true,
+			open: function() { $('.errMsg', this).empty(); },
+			buttons: [
+				{ text: 'Annuler', click: function () { $( this ).dialog('close') }},
+				{ text: 'Enregistrer', id: 'td-submit', click: function () { doSave() }}
+			]
+		}).keypress(function(event) {
+			if (event.keyCode == $.ui.keyCode.ENTER) {
+				event.preventDefault();
+				$('#td-submit').click();
+			}
+		});
+		function split(val) {
+			return val.split(/;\s*/);
+		}
+		function extractLast(term) {
+			return split(term).pop();
+		}
+		$("#id_budget")
+		// don't navigate away from the field on tab when selecting an item
+		.on("keydown", function(event) {
+			if (event.keyCode === $.ui.keyCode.TAB &&
+				$(this).autocomplete("instance").menu.active) {
+				event.preventDefault();
+			}
+		})
+		.autocomplete({
+			minLength: 0,
+			source: function(request, response) {
+				// delegate back to autocomplete, but extract the last term
+				response($.ui.autocomplete.filter(
+					Object.values(budgetsDict), extractLast(request.term)));
+			},
+			focus: function() {
+				// prevent value inserted on focus
+				return false;
+			},
+			select: function(event, ui) {
+				var terms = split(this.value);
+				// remove the current input
+				terms.pop();
+				// add the selected item
+				terms.push(ui.item.value);
+				// add placeholder to get the comma-and-space at the end
+				terms.push("");
+				this.value = terms.join("; ");
+				return false;
+			}
+		});
+		$("#id_date").datepicker();
+		{% if not trset %}$('#id_bis').hide();$('label[for="id_bis"]').hide();{% endif %}
+		$('label[for="id_montantbis"]').hide();
+				$('#id_montantbis').hide();
+				$('label[for="id_srcbis"]').hide();
+				$('#id_srcbis').hide();
+		$('#id_bis').change(function() {
+			if (this.checked) {
+				$('label[for="id_montantbis"]').show();
+				$('#id_montantbis').show();
+				$('label[for="id_srcbis"]').show();
+				$('#id_srcbis').show();
+			} else {
+				$('label[for="id_montantbis"]').hide();
+				$('#id_montantbis').hide();
+				$('label[for="id_srcbis"]').hide();
+				$('#id_srcbis').hide();
+			}
+		});
+		$("#recherche").keyup(function () {
+			filtrerOperations(this.value);
+			const expDate = new Date(Date.now()+(45*60000));
+			CookieUtil.set('filtrage', this.value, expDate, '/', null, null);
+			console.log('filtrage '+this.value);
+		});
+		const texte_recherche = CookieUtil.get('filtrage');
+		if (texte_recherche) {
+			$("#recherche").val(texte_recherche).keyup();
+		}
+	});
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="transaction-dialog" style="display:none">
+	<form id="transaction-form" method="POST" action="#">
+		<table cellpadding="4">
+			{{ form.as_table }}
+			<tr><td></td><td>{% csrf_token %}</td></tr>
+			<tr><td colspan="2"><span class="errMsg"></span>&nbsp;</td></tr>
+		</table>
+	</form>
+</div>
+{% if compte_ctx %}
+<h2>Compte: {{ compte_ctx }}</h2>
+{% if compte_ctx.has_parent and compte_ctx.parent != compte_ctx %}<h4>Compte parent: {{ compte_ctx.parent }}</h4>{% endif %}
+{% endif %}
+{% if budget_ctx %}
+<h2>Budget: {{ budget_ctx }}</h2>
+{% endif %}
+<p>
+	<table cellspacing="30"><tr><td>
+		<table class="bluetable">
+			{% if balances %}
+			<tr class="reconcilie"><td>Solde banque</td><td class="aright">{{ balances.banque }} €</td></tr>
+			<tr class="nonreconcilie"><td>Futur</td><td class="aright">{{ balances.futur }} €</td></tr>
+			{% endif %}
+			{% if budget_ctx %}
+			<tr><td colspan="2">Totaux pour la période</td></tr>
+			<tr><td>Crédit:</td><td class="aright">{{ total_ctx.credit }} €</td></tr>
+			<tr><td>Débit:</td><td class="aright">{{ total_ctx.debit }} €</td></tr>
+			{% endif %}
+		</table>
+	</td><td>
+	<!-- periode={{ periode }} -->
+	<select name="periode" id="period_sel">
+		<option value="1" {% if periode == 1 %}selected{% endif %}>Mois en cours + 1 mois</option>
+		<option value="3" {% if periode == 3 %}selected{% endif %}>Mois en cours + 3 mois</option>
+		<option value="6" {% if periode == 6 %}selected{% endif %}>Mois en cours + 6 mois</option>
+		<option value="12" {% if periode == 12 %}selected{% endif %}>Mois en cours + 12 mois</option>
+		<option value="24" {% if periode == 24 %}selected{% endif %}>Mois en cours + 24 mois</option>
+		<option value="0" {% if periode == 0 %}selected{% endif %}>Tout</option>
+	</select>
+	</td><td>
+		<input type="text" id="recherche" placeholder="rechercher..."/>
+		<a href="#" title="effacer" onclick="event.preventDefault(); $('#recherche').val('').keyup();"><span class="ui-icon ui-icon-circle-close"></span></a>
+	</td></tr></table>
+</p>
+<p>
+	<table class="bluetable" id="detailTab">
+		<thead><tr><th class="ui-widget-header"></th><th class="ui-widget-header">Date</th><th class="ui-widget-header">Crédit</th><th class="ui-widget-header">Débit</th>{% if budget_ctx %}<th class="ui-widget-header">Part</th>{% endif %}<th class="ui-widget-header">Budget</th><th class="ui-widget-header">Note</th><th>{% if compte_ctx %}<a href="#" title="Ajouter" onclick="ajoutTransactionDialog('{% url 'budget:nouvelle_op' compte_ctx.id %}');"><img src="{% static 'Add_24x24.png' %}"/></a>{% endif %}</th></tr></thead>
+		<tbody id="detailRows">{% for item in transactions %}{% if item.tr.reconcilie %}
+		<tr class="reconcilie">
+			<td><a href="#" title="déréconcilier" onclick="actionRequest('{% url 'budget:dereconcilier_tr' item.tr.id %}');"><span class="ui-icon ui-icon-locked"></span></a></td>
+			<td id="src{{item.tr.id}}" style="display:none">{{ item.tr.src.id }}</td>
+			<td id="dst{{item.tr.id}}" style="display:none">{{ item.tr.dst.id }}</td>
+			<td id="montant{{item.tr.id}}" style="display:none">{{ item.tr.montant }}</td>
+			<td id="budget{{item.tr.id}}" style="display:none">{{ item.tr.regle_budget|to_budget_name }}</td>
+			<td id="date{{item.tr.id}}" class="date">{{ item.tr.exec_date|date:'d/m/Y' }}</td>
+			{% if compte_ctx %}
+			{% if item.tr.dst == compte_ctx %}<td class="montant" title="Depuis le compte {{ item.tr.src }}">{{ item.tr.montant }} €{% else %}<td>{% endif %}</td>
+			{% if item.tr.src == compte_ctx %}<td class="montant" title="Vers le compte {{ item.tr.dst }}">{{ item.tr.montant }} €{% else %}<td>{% endif %}</td>
+			{% endif %}
+			{% if budget_ctx %}
+			{% if item.tr.dst and not item.tr.dst.externe %}<td class="montant" title="Vers le compte {{ item.tr.dst }}">{{ item.tr.montant }} €{% else %}<td>{% endif %}</td>
+			{% if item.tr.src and not item.tr.src.externe %}<td class="montant" title="Depuis le compte {{ item.tr.src }}">{{ item.tr.montant }} €{% else %}<td>{% endif %}</td>
+			<td class="montant">{{ item.part }} €</td>
+			{% endif %}
+			<td id="trid{{item.tr.id}}" class="sbdg"></td>
+			<td id="note{{item.tr.id}}" class="note">{{ item.tr.note }}</td>
+			<td><a href="#{{item.tr.id}}" id="edit{{item.tr.id}}" title="modifier" onclick="modifTransactionDialog('{% url 'budget:editer_tr' item.tr.id %}', {{item.tr.id}},true);"><span class="ui-icon ui-icon-pencil"></span></a></td>
+		</tr>
+		{% else %}
+		<tr class="nonreconcilie">
+			<td><a href="#" title="réconcilier" onclick="actionRequest('{% url 'budget:reconcilier_tr' item.tr.id %}');"><span class="ui-icon ui-icon-unlocked"></span></a></td>
+			<td id="src{{item.tr.id}}" style="display:none">{{ item.tr.src.id }}</td>
+			<td id="dst{{item.tr.id}}" style="display:none">{{ item.tr.dst.id }}</td>
+			<td id="montant{{item.tr.id}}" style="display:none">{{ item.tr.montant }}</td>
+			<td id="budget{{item.tr.id}}" style="display:none">{{ item.tr.regle_budget|to_budget_name }}</td>
+			<td id="date{{item.tr.id}}" class="date">{{ item.tr.exec_date|date:'d/m/Y' }}</td>
+			{% if compte_ctx %}
+			{% if item.tr.dst == compte_ctx %}<td class="montant" title="Depuis le compte {{ item.tr.src }}">{{ item.tr.montant }} €{% else %}<td>{% endif %}</td>
+			{% if item.tr.src == compte_ctx %}<td class="montant" title="Vers le compte {{ item.tr.dst }}">{{ item.tr.montant }} €{% else %}<td>{% endif %}</td>
+			{% endif %}
+			{% if budget_ctx %}
+			{% if item.tr.dst and not item.tr.dst.externe %}<td class="montant" title="Vers le compte {{ item.tr.dst }}">{{ item.tr.montant }} €{% else %}<td>{% endif %}</td>
+			{% if item.tr.src and not item.tr.src.externe %}<td class="montant" title="Depuis le compte {{ item.tr.src }}">{{ item.tr.montant }} €{% else %}<td>{% endif %}</td>
+			<td class="montant">{{ item.part }} €</td>
+			{% endif %}
+			<td id="trid{{item.tr.id}}" class="sbdg"></td>
+			<td id="note{{item.tr.id}}" class="note">{{ item.tr.note }}</td>
+			<td><a href="#{{item.tr.id}}" id="edit{{item.tr.id}}" title="modifier" onclick="modifTransactionDialog('{% url 'budget:editer_tr' item.tr.id %}', {{item.tr.id}},false);"><span class="ui-icon ui-icon-pencil"></span></a>&nbsp;
+				<a href="#" title="affiche ou cache le bouton de suppression" onclick="event.preventDefault(); $('#suppr{{item.tr.id}}').toggle();"><span class="ui-icon ui-icon-gear"></span></a>&nbsp;
+				<a href="#" id="suppr{{item.tr.id}}" class="hidden" title="supprimer" onclick="actionRequest('{% url 'budget:supprimer_tr' item.tr.id %}');"><span class="ui-icon ui-icon-trash"></span></a></td>
+		</tr>
+		{% endif %}{% endfor %}</tbody>
+	</table>
+</p>
+{% endblock %}
