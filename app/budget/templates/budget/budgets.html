@@ -1,0 +1,85 @@
+{% extends "budget/base.html" %}
+{% load static %}
+
+{% block title %}Budgets{% endblock %}
+
+{% block script %}
+<script>
+	const commit = function() {
+		$('#budget-dialog').dialog('close');
+		return $.ajax({
+			type: 'POST',
+			url: $('#budget-form').attr('action'),
+			data: $('#budget-form').serialize(),
+			success: function() {
+				$("*").css("cursor", "wait");
+				window.location.reload();
+			},
+			error: function(xhr) {
+				$("*").css("cursor", "wait");
+				window.location.reload();
+			},
+		});
+	};
+	const doSave = function() {
+		if ($('#id_nom').val().trim().length == 0) {
+			$('#budget-dialog .errMsg').html('Le nom ne doit pas être vide');
+			return;
+		}
+		commit();
+	};
+	const ajoutBudgetDialog = function(link) {
+		event.preventDefault();
+		$('#budget-form').attr('action', link);
+		$('#id_nom').val('');
+		$('#id_crediteur').prop('checked', false);
+		$('#budget-dialog').dialog('open');
+	};
+	const modifBudgetDialog = function(link, id) {
+		event.preventDefault();
+		$('#budget-form').attr('action', link);
+		$('#id_nom').val($('#nom'+id).text());
+		$('#id_crediteur').prop('checked', ($('#crediteur'+id).text() == 'Oui'));
+		$('#budget-dialog').dialog('open');
+	};
+	$( function() {
+		$('#budget-dialog').dialog({
+			autoOpen: false,
+			width: 480,
+			modal: true,
+			open: function() { $('.errMsg', this).empty(); },
+			buttons: [
+				{ text: 'Annuler', click: function () { $( this ).dialog('close') }},
+				{ text: 'Enregistrer', id: 'cd-submit', click: function () { doSave() }}
+			]
+		}).keypress(function(event) {
+			if (event.keyCode == $.ui.keyCode.ENTER) {
+				event.preventDefault();
+				$('#cd-submit').click();
+			}
+		});
+		$('#id_nom').addClass("ui-corner-all");
+	});
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="budget-dialog" style="display:none">
+	<form id="budget-form" method="POST" action="#">
+		<table cellpadding="4">
+			{{ form.as_table }}
+			<tr><td></td><td>{% csrf_token %}</td></tr>
+			<tr><td colspan="2"><span class="errMsg"></span>&nbsp;</td></tr>
+		</table>
+	</form>
+</div>
+<table class="bluetable" id="budgetTab">
+	<tr><th>Budgets</th><th><a href="#" title="Ajouter" onclick="ajoutBudgetDialog('{% url 'budget:ajouter_budget' %}');"><img src="{% static 'Add_24x24.png' %}"/></a></th></tr>
+	{% for budget in budgets %}<tr>
+		<td id="nom{{budget.id}}">{% if not budget.is_empty %}<a href="{% url 'budget:lister_op_budget' budget.id %}">{{ budget.nom }}</a>{% else %}{{ budget.nom }}{% endif %}</td>
+		<td id="crediteur{{budget.id}}" style="display:none">{% if budget.crediteur %}Oui{% else %}Non{% endif %}</td>
+		<td><a href="#{{budget.id}}" id="edit{{budget.id}}" title="modifier" onclick="modifBudgetDialog('{% url 'budget:editer_budget' budget.id %}', {{ budget.id }});"><span class="ui-icon ui-icon-pencil"></span></a>&nbsp;
+			{% if budget.is_empty %}<a href="#" id="suppr{{budget.id}}" title="supprimer" onclick="actionRequest('{% url 'budget:supprimer_bdg' budget.id %}');"><span class="ui-icon ui-icon-trash"></span></a>{% endif %}</td>
+	</tr>{% endfor %}
+</table>
+{% endblock %}

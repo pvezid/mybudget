@@ -1,0 +1,144 @@
+{% extends "budget/base.html" %}
+{% load static %}
+{% load myfilters %}
+
+{% block title %}Budgets{% endblock %}
+
+{% block script %}
+<script src="{% static 'chart.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div style="width:1080px;">
+	<canvas id="budgetsdumois"></canvas>
+</div>
+<div style="margin:20px;">
+	<div style="display:block;float:left;margin:10px;width:1080px;">
+		<canvas id="budgetsparmois"></canvas>
+	</div>
+	<div style="display:block;float:left;margin:10px;">
+		<table>
+			<tr><td>
+				<select id="selBudget" size="20" multiple></select>
+			</td></tr>
+			<tr><td>
+				<label for="empiler">Empiler</label>
+				<input id="empiler" type="checkbox"/>
+			</td></tr>
+		</table>
+	</div>
+</div>
+<script>
+	const setStacked = function(chart) {
+		let stacked = $('#empiler').prop('checked');
+		chart.options.scales.x.stacked = stacked;
+		chart.options.scales.y.stacked = stacked;
+	};
+	$( function() {
+		const budgets = [ {% for x in budgets_par_mois %} { 'mois': '{{ x.mois|upper }}', 'nom': '{{ x.budget__nom }}', 'crediteur': {{ x.budget__crediteur|lower }}, 'montant': {{ x.montant_mois|stringformat:".2f"|comma_to_dot }} }, {% endfor %} ];
+		budgets.map(x => x.montant *= x.crediteur?1:-1);
+		let treizeDerniersMois = [];
+		let d = new Date();
+		d.setDate(1);
+		d.setMonth(d.getMonth() - 12);
+		for (i = 0; i <= 12; i++) {
+			treizeDerniersMois.push(d.toISOString().substr(0,10));
+			d.setMonth(d.getMonth() + 1);
+		}
+		const listeBudgets = Array.from(budgets.reduce((accumulator, x) => accumulator.add(x.nom), new Set())).sort();
+		let bchart = new Chart($("#budgetsparmois"), {
+			type: 'bar',
+			data: {
+				labels: [],
+				datasets: [{
+					label: '',
+					borderWidth: 1,
+					data: [],
+				}]
+			},
+			options: {
+				responsive: true,
+				scales: {
+					y: { beginAtZero: true }
+				}
+			}
+		});
+		$('#selBudget').empty().append(listeBudgets.reduce((accumulator, x) => accumulator + '<option>' + x + '</option>', ''));
+		$('#empiler').change(function() {
+			setStacked(bchart);
+			bchart.update();
+		});
+		$('#selBudget').change(function() {
+			bchart.data.labels = treizeDerniersMois;
+			let ds = [];
+			$('#selBudget option:selected').each(function () {
+				let nom = $(this).text();
+				let budget = budgets.filter(item => item.nom == nom && bchart.data.labels.includes(item.mois));
+				let montantsmois = bchart.data.labels.map(item => budget.find(x => x.mois == item)).map(x => x?x.montant:0.0);
+				ds.push({
+					label: nom,
+					borderWidth: 1,
+					data: montantsmois,
+				});
+			});
+			bchart.data.datasets = ds;
+			setStacked(bchart);
+			bchart.update();
+		});
+		const moisEnCours = treizeDerniersMois.slice(-1)[0];
+		const budgetsDepensesMoisEnCours = budgets.filter(item => !item.crediteur && item.mois == moisEnCours).sort((a, b) => b.montant - a.montant);
+		const budgetsDepensesAutresMois = budgets.filter(item => !item.crediteur && item.mois != moisEnCours);
+		const topBudgetsDepenseMoisEnCours = budgetsDepensesMoisEnCours.slice(0, 16);
+		const budgetsdumois_datasets = [{
+			label: 'Mois en cours',
+			borderWidth: 1,
+			data: topBudgetsDepenseMoisEnCours.map(item => item.montant.toFixed(2)),
+		}];
+		const unMois = treizeDerniersMois.slice(-2,-1);
+		const budgets1Mois = [];
+		topBudgetsDepenseMoisEnCours.forEach(function (item) {
+			const somme = budgetsDepensesAutresMois.filter(x => x.nom == item.nom && unMois.includes(x.mois)).reduce((accumulator, x) => accumulator + x.montant, 0);
+			budgets1Mois.push(somme.toFixed(2));
+		});
+		budgetsdumois_datasets.push({
+			label: 'Le mois précédent',
+			borderWidth: 1,
+			data: budgets1Mois,
+		});
+		const troisMois = treizeDerniersMois.slice(-4,-1);
+		const budgetsMoyen3Mois = [];
+		topBudgetsDepenseMoisEnCours.forEach(function (item) {
+			const somme = budgetsDepensesAutresMois.filter(x => x.nom == item.nom && troisMois.includes(x.mois)).reduce((accumulator, x) => accumulator + x.montant, 0);
+			budgetsMoyen3Mois.push((somme/3).toFixed(2));
+		});
+		budgetsdumois_datasets.push({
+			label: 'Moyenne des 3 mois précédents',
+			borderWidth: 1,
+			data: budgetsMoyen3Mois,
+		});
+		const douzeMois = treizeDerniersMois.slice(-13,-1);
+		const budgetsMoyen12Mois = [];
+		topBudgetsDepenseMoisEnCours.forEach(function (item) {
+			const somme = budgetsDepensesAutresMois.filter(x => x.nom == item.nom && douzeMois.includes(x.mois)).reduce((accumulator, x) => accumulator + x.montant, 0);
+			budgetsMoyen12Mois.push((somme/12).toFixed(2));
+		});
+		budgetsdumois_datasets.push({
+			label: 'Moyenne des 12 mois précédents',
+			borderWidth: 1,
+			data: budgetsMoyen12Mois,
+		});
+		new Chart($("#budgetsdumois"), {
+			type: 'bar',
+			data: {
+				labels: topBudgetsDepenseMoisEnCours.map(item => item.nom),
+				datasets: budgetsdumois_datasets
+			},
+			options: {
+				scales: {
+					y: { beginAtZero: true }
+				}
+			}
+		});
+	});
+</script>
+{% endblock %}

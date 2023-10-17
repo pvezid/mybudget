@@ -1,0 +1,145 @@
+<!doctype html>{% load static %}
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<title>{% block title %}{% endblock %}</title>
+	<link rel="stylesheet" href="{% static 'jquery-ui-1.13.2.redmond/jquery-ui.css' %}">
+	<script src="{% static 'jquery-ui-1.13.2.redmond/external/jquery/jquery.js' %}"></script>
+	<script src="{% static 'jquery-ui-1.13.2.redmond/jquery-ui.js' %}"></script>
+	<script src="{% static 'jquery-ui-datepicker-fr.js' %}"></script>
+	<link rel="stylesheet" href="{% static 'budget.css' %}">
+	<link rel="stylesheet" href="{% static 'menu.css' %}">
+	<script>
+		const PreferenceStorageKey = 'MyBudget.Preferences';
+		let preferences;
+		const CookieUtil = {
+			get: function (name) {
+				let cookieName = encodeURIComponent(name) + '=',
+					cookieStart = document.cookie.indexOf(cookieName),
+					cookieValue = null;
+				if (cookieStart > -1) {
+					let cookieEnd = document.cookie.indexOf(';', cookieStart);
+					if (cookieEnd == -1) {
+						cookieEnd = document.cookie.length;
+					}
+					cookieValue = decodeURIComponent(document.cookie.substring(cookieStart + cookieName.length, cookieEnd));
+				}
+				return cookieValue;
+			},
+			set: function (name, value, expires, path, domain, secure) {
+				let cookieText = encodeURIComponent(name) + '=' + encodeURIComponent(value);
+				if (expires instanceof Date) {
+					cookieText += '; expires=' + expires.toUTCString();
+				}
+				if (path != null) {
+					cookieText += '; path=' + encodeURI(path);
+				}
+				if (domain && domain.match(/^[0-9a-zA-Z.-]+$/)) {
+					cookieText += '; domain=' + domain;
+				}
+				if (secure) {
+					cookieText += '; secure';
+				}
+				document.cookie = cookieText;
+			},
+			unset: function (name, path, domain, secure) {
+				this.set(name, '', new Date(0), path, domain, secure);
+			}
+		};
+		const saveData = function (name, value) {
+			if (localStorage != null) {
+				localStorage.setItem(name, JSON.stringify(value));
+			}
+			else if (CookieUtil != null) {
+				let expDate = new Date();
+				expDate.setFullYear(expDate.getFullYear() + 1);
+				CookieUtil.set(name, JSON.stringify(value), expDate, '/', null, null);
+			}
+		};
+		const loadData = function (name, defaut) {
+			let ret = defaut;
+			let cval = null;
+			if (localStorage != null) {
+				cval = localStorage.getItem(name);
+			}
+			if (cval == null && CookieUtil != null) {
+				cval = CookieUtil.get(name);
+			}
+			if (cval != null) {
+				try { ret = JSON.parse(cval); }
+				catch (e) { /* ignored */ }
+			}
+			return ret;
+		};
+		const actionRequest = function (link) {
+			event.preventDefault();
+			return $.ajax({
+				type: 'GET',
+				url: link,
+				success: function() {
+					$("*").css("cursor", "wait");
+					window.location.reload();
+				},
+				error: function(xhr) {
+					$("*").css("cursor", "wait");
+					window.location.reload();
+				},
+			});
+		};
+		$( function() {
+			$(document).tooltip();
+			$(".hidden").hide();
+			preferences = loadData(PreferenceStorageKey, { newDate: 0, montantTR: 25 });
+			$('#SeButton').unbind('click').click(function(event) {
+				event.preventDefault();
+				$(this).blur();
+				$('#settings-dialog').dialog('open');
+			});
+			$('#settings-dialog').dialog({
+				autoOpen: false,
+				width: 600,
+				modal: true,
+				close: function() {
+					$("*").css("cursor", "wait");
+					window.location.reload();
+				},
+				buttons: [
+					{ text: 'Close', click: function() { $('#settings-dialog').dialog('close'); } }
+				]
+			});
+			$('#newDate option').eq(preferences.newDate).prop('selected', true);
+			$('#newDate').change(function() {
+				preferences.newDate = $('#newDate option:selected').val();
+				saveData(PreferenceStorageKey, preferences);
+			});
+		});
+	</script>
+	{% block script %}{% endblock %}
+</head>
+<body class="ui-widget">
+	<div id="settings-dialog" title="Preferences" style="display: none">
+		<table cellpadding="4">
+			<tr>
+				<td style="text-align: right"><label for="newDate">Date par défaut :</label></td>
+				<td><select id="newDate">
+					<option value="0" selected>Aujourd'hui</option>
+					<option value="1">Précédente opération</option>
+				</select></td>
+				<td><span title="La date affichée par défaut lors de l'ajout d'une nouvelle opération: date du jour ou date de la précédente opération" class="ui-icon ui-icon-info"></span></td>
+			</tr>
+		</table>
+	</div>
+	<div id="cssmenu">
+		<div id="menu-button">Menu</div>
+		<ul id="menubar">
+			<li><a href="{% url 'budget:lister_comptes' %}"><span>Comptes</span></a></li>
+			<li><a href="{% url 'budget:lister_budgets' %}"><span>Budgets</span></a></li>
+			<li><a href="{% url 'budget:graphes' %}"><span>Graphes</span></a></li>
+			<li><a id="SeButton" href="#"><span>Préférences</span></a></li>
+		</ul>
+	</div>
+	<div id="content">
+		{% block content %}{% endblock %}
+	</div>
+</body>
+</html>

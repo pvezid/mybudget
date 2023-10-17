@@ -1,0 +1,102 @@
+{% extends "budget/base.html" %}
+{% load static %}
+
+{% block title %}Comptes{% endblock %}
+
+{% block script %}
+<script>
+	const commit = function() {
+		$('#compte-dialog').dialog('close');
+		return $.ajax({
+			type: 'POST',
+			url: $('#compte-form').attr('action'),
+			data: $('#compte-form').serialize(),
+			success: function() {
+				$("*").css("cursor", "wait");
+				window.location.reload();
+			},
+			error: function(xhr) {
+				$("*").css("cursor", "wait");
+				window.location.reload();
+			},
+		});
+	};
+	const doSave = function() {
+		if ($('#id_nom').val().trim().length == 0) {
+			$('#compte-dialog .errMsg').html('Le nom ne doit pas être vide');
+			return;
+		}
+		if ($('#id_selfid').val() != '' && $('#id_selfid').val() == $('#id_parent').val().trim()) {
+			$('#compte-dialog .errMsg').html('Le parent ne doit pas être le compte lui-même');
+			return;
+		}
+		commit();
+	};
+	const ajoutCompteDialog = function(link) {
+		event.preventDefault();
+		$('#id_selfid').val('');
+		$('#compte-form').attr('action', link);
+		$('#id_nom').val('');
+		$('#id_report').val(0);
+		$('#id_parent').val('');
+		$('#id_actif').prop('checked', true);
+		$('#id_externe').prop('checked', false);
+		$('#compte-dialog').dialog('open');
+	};
+	const modifCompteDialog = function(link, id) {
+		event.preventDefault();
+		$('#id_selfid').val(id);
+		$('#compte-form').attr('action', link);
+		$('#id_nom').val($('#nom'+id).text());
+		report = parseFloat($('#report'+id).text().replace(',','.'));
+		$('#id_report').val(report);
+		$('#id_parent').val($('#parent'+id).text());
+		$('#id_actif').prop('checked', ($('#actif'+id).text() == 'Oui'));
+		$('#id_externe').prop('checked', ($('#externe'+id).text() == 'Oui'));
+		$('#compte-dialog').dialog('open');
+	};
+	$( function() {
+		$('#compte-dialog').dialog({
+			autoOpen: false,
+			width: 520,
+			modal: true,
+			open: function() { $('.errMsg', this).empty(); },
+			buttons: [
+				{ text: 'Annuler', click: function () { $( this ).dialog('close') }},
+				{ text: 'Enregistrer', id: 'cd-submit', click: function () { doSave() }}
+			]
+		}).keypress(function(event) {
+			if (event.keyCode == $.ui.keyCode.ENTER) {
+				event.preventDefault();
+				$('#cd-submit').click();
+			}
+		});
+		$('#id_nom').addClass("ui-corner-all");
+		$('#id_report').addClass("ui-corner-all");
+	});
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="compte-dialog" style="display:none">
+	<form id="compte-form" method="POST" action="#">
+		<table cellpadding="4">
+			{{ form.as_table }}
+			<tr><td><input type="hidden" id="id_selfid" value=""/></td><td>{% csrf_token %}</td></tr>
+			<tr><td colspan="2"><span class="errMsg"></span>&nbsp;</td></tr>
+		</table>
+	</form>
+</div>
+<table class="bluetable" id="compteTab">
+	<tr><th>Comptes</th><th><a href="#" title="Ajouter" onclick="ajoutCompteDialog('{% url 'budget:ajouter_compte' %}');"><img src="{% static 'Add_24x24.png' %}"/></a></th></tr>
+	{% for compte in comptes %}<tr>
+		<td id="nom{{compte.id}}" class="{% if compte.externe %}externe{% else %}interne{% endif %} {% if compte.actif %}actif{% else %}inactif{% endif %} ">{% if compte.actif and not compte.externe %}<a href="{% url 'budget:lister_op' compte.id %}">{% endif %}{{ compte.nom }}{% if compte.actif %}</a>{% endif %}</td>
+		<td id="report{{compte.id}}" style="display:none">{{ compte.report }}</td>
+		<td id="parent{{compte.id}}" style="display:none">{% if compte.parent %}{{ compte.parent.id }}{% endif %}</td>
+		<td id="actif{{compte.id}}" style="display:none">{% if compte.actif %}Oui{% else %}Non{% endif %}</td>
+		<td id="externe{{compte.id}}" style="display:none">{% if compte.externe %}Oui{% else %}Non{% endif %}</td>
+		<td><a href="#{{compte.id}}" id="edit{{compte.id}}" title="modifier" onclick="modifCompteDialog('{% url 'budget:editer_compte' compte.id %}', {{ compte.id }});"><span class="ui-icon ui-icon-pencil"></span></a>&nbsp;
+			{% if compte.is_empty %}<a href="#" id="suppr{{compte.id}}" title="supprimer" onclick="actionRequest('{% url 'budget:supprimer_cpt' compte.id %}');"><span class="ui-icon ui-icon-trash"></span></a>{% endif %}</td>
+	</tr>{% endfor %}
+</table>
+{% endblock %}

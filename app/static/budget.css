@@ -1,0 +1,93 @@
+body {
+	margin: 50px;
+	background-color: #fff;
+}
+.formtable th {
+	text-align: right;
+}
+.bluetable th {
+	text-align: left;
+	height: 24px;
+	padding: 6px;
+	border-radius: 4px;
+}
+.bluetable td {
+	padding: 6px;
+	border-radius: 4px;
+}
+.montant {
+	text-align: right;
+	min-width: 100px
+}
+.note {
+	min-width: 300px
+}
+.budget {
+	/*min-width: 300px*/
+}
+.reconcilie {
+	background: #5be266;
+}
+.nonreconcilie {
+	background: #d6ec5a;
+}
+.tags {
+	list-style: none;
+	margin: 0;
+	overflow: hidden;
+	padding: 0;
+}
+.tags li {
+	float: left;
+}
+.tag {
+	background-color: #1728c7;
+	display: inline;
+	padding: .2em .6em .3em;
+	font-size: 75%;
+	font-weight: 700;
+	line-height: 1;
+	color: #fff;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: baseline;
+	border-radius: .25em;
+	box-sizing: border-box;
+}
+.aright {
+	text-align: right;
+}
+.hidden {
+	display: none;
+}
+.externe {
+
+}
+.inactif {
+	color: rgb(128, 128, 128);
+}
+.errMsg {
+	color: #890679
+}
+#compte-form th {
+	text-align: right;
+}
+#transaction-form th {
+	text-align: right;
+}
+.chart-container {
+	width:  1200px;
+	height: 900px;
+}
+.ui-autocomplete {
+	max-height: 110px;
+	overflow-y: auto;
+	/* prevent horizontal scrollbar */
+	overflow-x: hidden;
+}
+/* IE 6 doesn't support max-height
+ * we use height instead, but this forces the menu to always be this tall
+ */
+* html .ui-autocomplete {
+	height: 110px;
+}
