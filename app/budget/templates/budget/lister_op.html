@@ -6,9 +6,8 @@
 
 {% block script %}
 <script>
-	const budgetsDict = {
-		{% for bdg in budgets %}"{{ bdg.id }}": "{{ bdg.nom }}",{% endfor %}
-	};
+	const budgetsDict = { {% for bdg in budgets %}"{{ bdg.id }}":"{{ bdg.nom }}",{% endfor %} };
+	const comptesDict = { {% for cpt in comptes %}"{{ cpt.id }}":{"nom":"{{ cpt.nom }}","externe":{% if cpt.externe %}true{% else %}false{% endif %} },{% endfor %} };
 	const commit = function() {
 		$('#transaction-dialog').dialog('close');
 		const expDate = new Date(Date.now()+(45*60000));
@@ -47,12 +46,18 @@
 			$('#transaction-dialog .errMsg').html('Il manque la date');
 			return;
 		}
-		if ($('#id_src').val().trim().length == 0 && $('#id_dst').val().trim().length == 0) {
+		const src = $('#id_src').val().trim();
+		const dst = $('#id_dst').val().trim();
+		if (src.length == 0 && dst.length == 0) {
 			$('#transaction-dialog .errMsg').html('Il faut un compte source ou destination');
 			return;
 		}
-		if ($('#id_src').val().trim().length == $('#id_dst').val().trim().length) {
+		if (src == dst) {
 			$('#transaction-dialog .errMsg').html('Les comptes source et destination doivent être différents');
+			return;
+		}
+		if ((src.length == 0 || comptesDict[src].externe) && (dst.length == 0 || comptesDict[dst].externe)) {
+			$('#transaction-dialog .errMsg').html("Pas d'enregistrement d'opération entre comptes externes");
 			return;
 		}
 		if ($('#id_bis').is(":checked")) {
@@ -66,7 +71,7 @@
 					return;
 				}
 			}
-			if ($('#id_srcbis').val() == $('#id_src').val()) {
+			if ($('#id_srcbis').val() == src) {
 				$('#transaction-dialog .errMsg').html('Le compte source et le compte TR doivent être différents');
 				return;
 			}
@@ -143,7 +148,7 @@
 	}
 	$( function() {
 		$('#period_sel').selectmenu({ change: updatePeriod, width: 300 });
-		{% if compte_ctx %}
+		{% if compte_ctx and not compte_ctx.externe  %}
 		$("#menubar").append('<li><a href="{% url 'budget:mensuel_op' compte_ctx.id %}">Intégrer les Op. Mensuelles</a></li>');
 		{% if compte_ctx.has_parent and compte_ctx.parent != compte_ctx %}$("#menubar").append('<li><a href="{% url 'budget:transfert_op' compte_ctx.id %}">Transférer vers le compte parent</a></li>');{% endif %}
 		{% endif %}
@@ -271,11 +276,11 @@
 <p>
 	<table cellspacing="30"><tr><td>
 		<table class="bluetable">
-			{% if balances %}
+			{% if balances and not compte_ctx.externe%}
 			<tr class="reconcilie"><td>Solde banque</td><td class="aright">{{ balances.banque }} €</td></tr>
 			<tr class="nonreconcilie"><td>Futur</td><td class="aright">{{ balances.futur }} €</td></tr>
 			{% endif %}
-			{% if budget_ctx %}
+			{% if budget_ctx or compte_ctx.externe %}
 			<tr><td colspan="2">Totaux pour la période</td></tr>
 			<tr><td>Crédit:</td><td class="aright">{{ total_ctx.credit }} €</td></tr>
 			<tr><td>Débit:</td><td class="aright">{{ total_ctx.debit }} €</td></tr>
@@ -298,7 +303,7 @@
 </p>
 <p>
 	<table class="bluetable" id="detailTab">
-		<thead><tr><th class="ui-widget-header"></th><th class="ui-widget-header">Date</th><th class="ui-widget-header">Crédit</th><th class="ui-widget-header">Débit</th>{% if budget_ctx %}<th class="ui-widget-header">Part</th>{% endif %}<th class="ui-widget-header">Budget</th><th class="ui-widget-header">Note</th><th>{% if compte_ctx %}<a href="#" title="Ajouter" onclick="ajoutTransactionDialog('{% url 'budget:nouvelle_op' compte_ctx.id %}');"><img src="{% static 'Add_24x24.png' %}"/></a>{% endif %}</th></tr></thead>
+		<thead><tr><th class="ui-widget-header"></th><th class="ui-widget-header">Date</th><th class="ui-widget-header">Crédit</th><th class="ui-widget-header">Débit</th>{% if budget_ctx %}<th class="ui-widget-header">Part</th>{% endif %}<th class="ui-widget-header">Budget</th><th class="ui-widget-header">Note</th><th>{% if compte_ctx and not compte_ctx.externe %}<a href="#" title="Ajouter" onclick="ajoutTransactionDialog('{% url 'budget:nouvelle_op' compte_ctx.id %}');"><img src="{% static 'Add_24x24.png' %}"/></a>{% endif %}</th></tr></thead>
 		<tbody id="detailRows">{% for item in transactions %}{% if item.tr.reconcilie %}
 		<tr class="reconcilie">
 			<td><a href="#" title="déréconcilier" onclick="actionRequest('{% url 'budget:dereconcilier_tr' item.tr.id %}');"><span class="ui-icon ui-icon-locked"></span></a></td>

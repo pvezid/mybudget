@@ -5,6 +5,7 @@
 
 {% block script %}
 <script>
+	const comptesList = [ {% for cpt in comptes %}"{{ cpt.nom }}",{% endfor %} ];
 	const commit = function() {
 		$('#compte-dialog').dialog('close');
 		return $.ajax({
@@ -26,8 +27,16 @@
 			$('#compte-dialog .errMsg').html('Le nom ne doit pas être vide');
 			return;
 		}
+		if (comptesList.includes($('#id_nom').val().trim())) {
+			$('#compte-dialog .errMsg').html('Le nom est déjà utilisé');
+			return;
+		}
 		if ($('#id_selfid').val() != '' && $('#id_selfid').val() == $('#id_parent').val().trim()) {
 			$('#compte-dialog .errMsg').html('Le parent ne doit pas être le compte lui-même');
+			return;
+		}
+		if ($('#id_externe').is(":checked") && $('#id_parent').val().trim().length != 0) {
+			$('#compte-dialog .errMsg').html('Un compte externe ne peut pas avoir de parent');
 			return;
 		}
 		commit();
@@ -90,7 +99,7 @@
 <table class="bluetable" id="compteTab">
 	<tr><th>Comptes</th><th><a href="#" title="Ajouter" onclick="ajoutCompteDialog('{% url 'budget:ajouter_compte' %}');"><img src="{% static 'Add_24x24.png' %}"/></a></th></tr>
 	{% for compte in comptes %}<tr>
-		<td id="nom{{compte.id}}" class="{% if compte.externe %}externe{% else %}interne{% endif %} {% if compte.actif %}actif{% else %}inactif{% endif %} ">{% if compte.actif and not compte.externe %}<a href="{% url 'budget:lister_op' compte.id %}">{% endif %}{{ compte.nom }}{% if compte.actif %}</a>{% endif %}</td>
+		<td id="nom{{compte.id}}" class="{% if compte.externe %}externe{% else %}interne{% endif %} {% if compte.actif %}actif{% else %}inactif{% endif %} ">{% if compte.actif %}<a href="{% url 'budget:lister_op' compte.id %}">{% endif %}{{ compte.nom }}{% if compte.actif %}</a>{% endif %}</td>
 		<td id="report{{compte.id}}" style="display:none">{{ compte.report }}</td>
 		<td id="parent{{compte.id}}" style="display:none">{% if compte.parent %}{{ compte.parent.id }}{% endif %}</td>
 		<td id="actif{{compte.id}}" style="display:none">{% if compte.actif %}Oui{% else %}Non{% endif %}</td>

@@ -59,7 +59,8 @@ def ajouter_compte(request):
                 report = form.cleaned_data['report']
                 parent = form.cleaned_data['parent']
                 actif = form.cleaned_data['actif']
-                cpt = Compte(nom=nom, report=report, parent=parent, actif=actif)
+                externe = form.cleaned_data['externe']
+                cpt = Compte(nom=nom, report=report, parent=parent, actif=actif, externe=externe)
                 cpt.save()
             else:
                 logger.warn(form.errors)
@@ -80,6 +81,7 @@ def editer_compte(request, compte_id):
                 compte.report = form.cleaned_data['report']
                 compte.parent = form.cleaned_data['parent']
                 compte.actif = form.cleaned_data['actif']
+                compte.externe = form.cleaned_data['externe']
                 compte.save()
             else:
                 logger.warn(form.errors)
@@ -97,6 +99,7 @@ def supprimer_cpt(request, compte_id):
 
 def lister_op(request, compte_id, period=1):
     compte = get_object_or_404(Compte, pk=compte_id)
+    comptes = list(Compte.objects.order_by('nom'))
     budgets = list(Budget.objects.order_by('nom'))
     if period != 0:
         today = datetime.date.today()
@@ -106,13 +109,18 @@ def lister_op(request, compte_id, period=1):
     else:
         tr_list = list(Transaction.objects.filter(Q(src=compte)|Q(dst=compte)).order_by('-exec_date'))
     trp_list = []
+    total_ctx = { "debit": Decimal('0.00'), "credit": Decimal('0.00') }
     for tr in tr_list:
-        trp_list.append
+        if (tr.src is None or tr.src.externe) and not (tr.dst is None or tr.dst.externe):
+            total_ctx['credit'] += Decimal(tr.montant)
+        if (not (tr.src is None or tr.src.externe)) and (tr.dst is None or tr.dst.externe):
+            total_ctx['debit'] += Decimal(tr.montant)
         trp_list.append({"tr": tr, "part": None})
-    return render(request, 'budget/lister_op.html', {'compte_ctx': compte, 'transactions': trp_list, 'balances': compte.balances(), 'budgets': budgets, 'form': TransactionForm(), 'periode': period, 'trset': settings.TR })
+    return render(request, 'budget/lister_op.html', {'compte_ctx': compte, 'transactions': trp_list, 'balances': compte.balances(), 'comptes': comptes, 'budgets': budgets, 'total_ctx': total_ctx, 'form': TransactionForm(), 'periode': period, 'trset': settings.TR })
 
 def lister_op_budget(request, budget_id, period=6):
     budget = get_object_or_404(Budget, pk=budget_id)
+    comptes = list(Compte.objects.order_by('nom'))
     budgets = list(Budget.objects.order_by('nom'))
     if period != 0:
         today = datetime.date.today()
@@ -133,7 +141,7 @@ def lister_op_budget(request, budget_id, period=6):
             total_ctx['debit'] += Decimal(rep.montant)
             part -= Decimal(rep.montant)
         trp_list.append({"tr": rep.transaction, "part": part})
-    return render(request, 'budget/lister_op.html', {'budget_ctx': budget, 'transactions': trp_list, 'budgets': budgets, 'total_ctx': total_ctx,'form': TransactionForm(), 'periode': period })
+    return render(request, 'budget/lister_op.html', {'budget_ctx': budget, 'transactions': trp_list, 'comptes': comptes, 'budgets': budgets, 'total_ctx': total_ctx,'form': TransactionForm(), 'periode': period })
 
 def mensuel_op(request, compte_id):
     compte = get_object_or_404(Compte, pk=compte_id)
