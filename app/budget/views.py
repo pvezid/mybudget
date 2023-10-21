@@ -152,7 +152,10 @@ def mensuel_op(request, compte_id):
     for tr in trLastMonth:
         trThisMonth = Transaction.objects.filter(Q(src=compte)|Q(dst=compte)).filter(note__iexact=tr.note).filter(exec_date__gte=begOfThisMonth)
         if trThisMonth.count() == 0:
-            newtr = Transaction(src=tr.src, dst=tr.dst, exec_date=today, montant=tr.montant, note=tr.note, regle_budget=tr.regle_budget)
+            lastDay = tr.exec_date.day
+            if lastDay > 28:
+                lastDay = 28
+            newtr = Transaction(src=tr.src, dst=tr.dst, exec_date=today.replace(day=lastDay), montant=tr.montant, note=tr.note, regle_budget=tr.regle_budget)
             _save_and_finalize_tr(newtr)
     return HttpResponseRedirect(reverse('budget:lister_op', args=(compte_id,)))
 
