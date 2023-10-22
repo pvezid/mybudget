@@ -1,3 +1,4 @@
 *.sqlite3
 *.sh
 .DS_Store
+data
