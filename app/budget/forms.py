@@ -35,6 +35,7 @@ class CompteForm(forms.Form):
     report = forms.DecimalField(label='Report', max_digits=8, decimal_places=2, required = False)
     parent = forms.ModelChoiceField(label='Parent', queryset=Compte.objects.filter(actif=True, externe=False).order_by('nom'), required = False)
     actif = forms.BooleanField(label='Actif', required = False)
+    externe = forms.BooleanField(label='Externe', required = False)
 
 class BudgetForm(forms.Form):
     nom = forms.CharField(label='Nom', max_length=200, widget=forms.TextInput(attrs={'size':'31', 'class':'inputText'}))

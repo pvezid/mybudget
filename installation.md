@@ -6,15 +6,15 @@
 
 Aller sur le site de Python: https://www.python.org et télécharger le module d'installation pour Windows. Prendre la version stable et lancer l'installation avec les options par défaut.
 
-### Installation des ficheris de l'appli
+### Installation des fichiers de l'appli
 
 Dézipper l'archive de l'appli dans votre dossier personnel et renommer le dossier créé mybudget.
 
-### Création un environnement virtuel
+### Création d'un environnement virtuel
 
 (Source: https://docs.djangoproject.com/en/4.1/howto/windows/)
 
-Ouvrir une fenetre de commande en tapant cmd dans la barre de commande de windows,
+Ouvrir une fenêtre de commande en tapant cmd dans la barre de commande de windows,
 puis lancer les commandes suivantes:
 
 ```
