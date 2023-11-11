@@ -6,46 +6,21 @@
 
 Aller sur le site de Python: https://www.python.org et télécharger le module d'installation pour Windows. Prendre la version stable et lancer l'installation avec les options par défaut.
 
-### Installation des fichiers de l'appli
+### Téléchargement et mise en place du script d'installation
 
-Dézipper l'archive de l'appli dans votre dossier personnel et renommer le dossier créé mybudget.
+A partir de https://github.com/pvezid/mybudget
 
-### Création d'un environnement virtuel
+* Cliquez sur le lien mybudget-installation.bat
+* Puis cliquez sur le symbôle de téléchargement sur la droite de la page pour télécharger le script.
+* A l'aide de l'explorateur de fichier, créez un sous-dossier mybudget dans votre dossier Documents.
+* Copiez ou déplacez le script d'installation dans ce sous-dossier.
 
-(Source: https://docs.djangoproject.com/en/4.1/howto/windows/)
+Il est important de créer un sous-dossier, le script d'installation doit être le seul ficher du dossier avant l'installation.
 
-Ouvrir une fenêtre de commande en tapant cmd dans la barre de commande de windows,
-puis lancer les commandes suivantes:
+![Capture d'écran de la préparation pour installer l'appli](/assets/install.png)
 
-```
-py -m venv mybudget
-mybudget\Scripts\activate.bat
-```
-
-### Installation des modules nécessaires
-
-Lancer l'installation des modules:
-
-```
-cd mybudget
-py -m pip install -r requirements.txt
-```
-
-### Initialisation de la base de données
-
-Créer le dossier data et initialiser la base de données:
-
-```
-mkdir data
-py app/manage.py migrate
-py app/manage.py loaddata init
-```
-
-Fermer la fenêtre de commandes.
-
-### Installation du script de lancement
-
-Créer un raccourci sur le fichier mybudget.bat et le déplacer sur le bureau.
+Avec l'explorateur de fichier faites un double click sur le script d'installation pour le lancer; il va s'exécuter pendant quelques minutes pour télécharger l'appli et l'installer.
+Le script va également créer un raccourci sur le bureau pour pouvoir lancer l'application.
 
 ### Lancement
 

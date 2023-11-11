@@ -101,6 +101,7 @@
 		$('#id_dst').val('');
 		$('#id_budget').val('');
 		$('#id_note').val('');
+		$('#id_bis').prop('checked', false);
 		$('#transaction-dialog').dialog('open');
 	};
 	{% endif %}
@@ -114,6 +115,7 @@
 		$('#id_dst').val($('#dst'+id).text()).prop('disabled',reconcilie);
 		$('#id_budget').val($('#budget'+id).text())
 		$('#id_note').val($('#note'+id).text());
+		$('#id_bis').prop('checked', false);
 		$('#id_bis').prop('disabled',reconcilie);
 		$('#transaction-dialog').dialog('open');
 	};
