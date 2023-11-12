@@ -35,4 +35,4 @@ Si votre navigateur affiche cette page, tout est prêt !
 
 ![Capture d'écran de la page d'entrée de l'appli](assets/mybudget.png)
 
-Il ne vous reste plus qu'à tester la prise en main rapide: [Prise en main](assets/mybudget - Prise en main.pdf)
+Il ne vous reste plus qu'à tester la prise en main rapide: [Prise en main](assets/mybudget-Prise-en-main.pdf)
